@@ -1,0 +1,38 @@
+{
+  "name": "corrode",
+  "version": "0.1.0",
+  "description": "The browser from 2035.",
+  "main": "main/index.js",
+  "scripts": {
+    "start": "concurrently \"npm run vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "vite": "vite",
+    "build": "vite build",
+    "dist": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "sql.js": "^1.12.0",
+    "d3": "^7.9.0",
+    "framer-motion": "^11.1.7",
+    "lucide-react": "^0.376.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "concurrently": "^8.2.2",
+    "electron": "^30.0.2",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "vite": "^5.2.11",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "io.corrode.browser",
+    "productName": "Corrode",
+    "files": ["dist/**/*", "main/**/*", "public/**/*"],
+    "directories": { "output": "release" }
+  }
+}

@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --void:        #0a0a0a;
+  --void-100:    #111111;
+  --void-200:    #1a1a1a;
+  --void-300:    #242424;
+  --void-400:    #2e2e2e;
+  --rust:        #ea580c;
+  --rust-glow:   rgba(234, 88, 12, 0.25);
+  --glass-bg:    rgba(17, 17, 17, 0.75);
+  --glass-border: rgba(234, 88, 12, 0.15);
+  --text-primary:   #e8e8e8;
+  --text-secondary: #8a8a8a;
+  --text-muted:     #555555;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--void);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  /* Subtle noise texture for the "oxidized" feel */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--void-400); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--rust); }
+
+/* Glass panel utility */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Rust glow effect */
+.rust-glow {
+  box-shadow: 0 0 12px var(--rust-glow), inset 0 0 12px rgba(0,0,0,0.3);
+}
+
+/* Drag region for frameless window */
+.titlebar-drag {
+  -webkit-app-region: drag;
+}
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Rust texture accent — a subtle oxidized gradient strip */
+.rust-accent {
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(234, 88, 12, 0.08) 20%,
+    rgba(194, 65, 12, 0.12) 50%,
+    rgba(234, 88, 12, 0.08) 80%,
+    transparent
+  );
+}
+
+/* Load progress bar */
+.progress-bar {
+  height: 2px;
+  background: linear-gradient(90deg, var(--rust), #fb923c, var(--rust));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
