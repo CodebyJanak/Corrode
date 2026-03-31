@@ -146,3 +146,21 @@ body::before {
 .animate-fade-up     { animation: fadeUp 0.4s cubic-bezier(.16,1,.3,1) forwards; }
 .animate-crackle     { animation: crackle 2s ease-in-out infinite; }
 .animate-gear-float  { animation: gearFloat 4s ease-in-out infinite; }
+
+/* ── Additional animations ── */
+@keyframes gearFloat {
+  0%,100% { transform: translateY(0px) rotate(0deg); }
+  33%      { transform: translateY(-10px) rotate(2deg); }
+  66%      { transform: translateY(-5px) rotate(-1deg); }
+}
+
+/* New tab background override */
+.newtab-bg {
+  background:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 100% 55% at 50% 0%, rgba(160,40,8,0.6) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 40% at 10% 50%, rgba(80,20,5,0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 65%, rgba(100,25,6,0.25) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 60% at 50% 110%, rgba(60,15,4,0.7) 0%, transparent 60%),
+    #0d0608;
+}
