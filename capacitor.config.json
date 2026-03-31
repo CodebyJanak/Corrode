@@ -1,0 +1,14 @@
+{
+  "appId": "io.corrode.browser",
+  "appName": "Corrode",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}

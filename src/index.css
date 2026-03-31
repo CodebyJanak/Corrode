@@ -1,84 +1,148 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --void:        #0a0a0a;
-  --void-100:    #111111;
-  --void-200:    #1a1a1a;
-  --void-300:    #242424;
-  --void-400:    #2e2e2e;
-  --rust:        #ea580c;
-  --rust-glow:   rgba(234, 88, 12, 0.25);
-  --glass-bg:    rgba(17, 17, 17, 0.75);
-  --glass-border: rgba(234, 88, 12, 0.15);
-  --text-primary:   #e8e8e8;
-  --text-secondary: #8a8a8a;
-  --text-muted:     #555555;
+/* ══════════════════════════════════════════
+   DARK THEME (default)
+══════════════════════════════════════════ */
+:root, [data-theme="dark"] {
+  --bg-base:        #0d0608;
+  --bg-100:         #130a0b;
+  --bg-200:         #1c0f10;
+  --bg-300:         #261518;
+  --bg-400:         #341c1f;
+  --bg-chrome:      rgba(10,4,5,0.97);
+  --bg-panel:       rgba(12,5,6,0.97);
+  --bg-input:       rgba(20,8,10,0.85);
+  --border:         rgba(100,35,15,0.5);
+  --border-focus:   rgba(201,74,10,0.7);
+  --ember:          #c94a0a;
+  --ember-bright:   #e8620c;
+  --ember-glow:     #ff7a2a;
+  --text-primary:   #f0d8c8;
+  --text-secondary: #b08070;
+  --text-muted:     #6a4a40;
+  --glass-bg:       rgba(18,8,9,0.82);
+  --glass-border:   rgba(180,60,20,0.25);
+  --thumb-bg: linear-gradient(160deg,#1a0a0c 0%,#0d0608 40%,#150a08 70%,#0a0605 100%);
 }
 
-* {
-  box-sizing: border-box;
+/* ══════════════════════════════════════════
+   LIGHT THEME
+══════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg-base:        #f5ede8;
+  --bg-100:         #edddd4;
+  --bg-200:         #e5cfc4;
+  --bg-300:         #dbbfb0;
+  --bg-400:         #ccaa96;
+  --bg-chrome:      rgba(238,224,215,0.98);
+  --bg-panel:       rgba(245,237,232,0.98);
+  --bg-input:       rgba(255,248,244,0.9);
+  --border:         rgba(160,80,40,0.3);
+  --border-focus:   rgba(180,65,15,0.7);
+  --ember:          #b83a08;
+  --ember-bright:   #d44e0a;
+  --ember-glow:     #e8620c;
+  --text-primary:   #2a1008;
+  --text-secondary: #6b3018;
+  --text-muted:     #a06040;
+  --glass-bg:       rgba(240,224,212,0.85);
+  --glass-border:   rgba(160,70,30,0.3);
+  --thumb-bg: linear-gradient(160deg,#edddd4 0%,#f5ede8 40%,#e8d5c8 70%,#f0e4da 100%);
 }
+
+* { box-sizing: border-box; }
 
 body {
-  background: var(--void);
+  background: var(--bg-base);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Rajdhani', system-ui, sans-serif;
   overflow: hidden;
   height: 100vh;
-  /* Subtle noise texture for the "oxidized" feel */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  transition: background 0.3s, color 0.3s;
 }
 
-/* Scrollbars */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--void-400); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--rust); }
+/* Oxidized texture overlay - adapts to theme */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
 
-/* Glass panel utility */
+#root { position: relative; z-index: 1; }
+
+/* New Tab background */
+.rust-texture {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -5%, rgba(180,50,10,0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 35% 25% at 20% 40%, rgba(100,30,10,0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 20% at 80% 65%, rgba(120,35,12,0.2) 0%, transparent 60%),
+    var(--thumb-bg);
+  background-attachment: fixed;
+}
+
+/* Glass panels */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
 }
 
-/* Rust glow effect */
-.rust-glow {
-  box-shadow: 0 0 12px var(--rust-glow), inset 0 0 12px rgba(0,0,0,0.3);
-}
+/* Scrollbars */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--ember); border-radius: 2px; opacity: 0.5; }
 
-/* Drag region for frameless window */
-.titlebar-drag {
-  -webkit-app-region: drag;
-}
-.titlebar-no-drag {
-  -webkit-app-region: no-drag;
-}
+/* Titlebar drag regions */
+.titlebar-drag { -webkit-app-region: drag; }
+.titlebar-no-drag { -webkit-app-region: no-drag; }
 
-/* Rust texture accent — a subtle oxidized gradient strip */
-.rust-accent {
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(234, 88, 12, 0.08) 20%,
-    rgba(194, 65, 12, 0.12) 50%,
-    rgba(234, 88, 12, 0.08) 80%,
-    transparent
-  );
+/* Forge button */
+.btn-forge {
+  background: linear-gradient(135deg, #7a2a08, var(--ember), var(--ember-bright));
+  border: 1px solid rgba(255,120,40,0.35);
+  color: #f0d8c8;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s;
 }
+.btn-forge:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--ember), var(--ember-bright), #ff8c30);
+  box-shadow: 0 0 20px rgba(232,98,12,0.4);
+  transform: translateY(-1px);
+}
+.btn-forge:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Load progress bar */
+/* Loading progress bar */
 .progress-bar {
   height: 2px;
-  background: linear-gradient(90deg, var(--rust), #fb923c, var(--rust));
+  background: linear-gradient(90deg, #7a2a08, var(--ember-bright), #ff9944, var(--ember-bright), #7a2a08);
   background-size: 200% 100%;
-  animation: shimmer 1.5s linear infinite;
+  animation: shimmer 1.2s linear infinite;
 }
 
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+/* Tab active top bar */
+.tab-active-bar {
+  background: linear-gradient(90deg, transparent, var(--ember), var(--ember-bright), var(--ember), transparent);
 }
+
+/* ── Animations ── */
+@keyframes shimmer    { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+@keyframes emberPulse { 0%,100%{opacity:.85;filter:brightness(1)} 50%{opacity:1;filter:brightness(1.25) drop-shadow(0 0 10px rgba(232,98,12,.7))} }
+@keyframes fadeUp     { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes crackle    { 0%,100%{box-shadow:0 0 8px rgba(201,74,10,.4)} 30%{box-shadow:0 0 18px rgba(232,98,12,.7),0 0 4px rgba(255,140,60,.5)} 70%{box-shadow:0 0 12px rgba(180,50,10,.5)} }
+@keyframes gearFloat  { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-8px) rotate(3deg)} }
+@keyframes gearSpin   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+.animate-ember-pulse { animation: emberPulse 3s ease-in-out infinite; }
+.animate-fade-up     { animation: fadeUp 0.4s cubic-bezier(.16,1,.3,1) forwards; }
+.animate-crackle     { animation: crackle 2s ease-in-out infinite; }
+.animate-gear-float  { animation: gearFloat 4s ease-in-out infinite; }

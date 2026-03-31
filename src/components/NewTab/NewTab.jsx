@@ -1,204 +1,247 @@
 /**
- * src/components/NewTab/NewTab.jsx
- * Custom new tab page — clock, weather, recent sites, AI rabbit hole suggestion.
+ * NewTab.jsx — Corrode Browser
+ * Uses the real rusted gear PNG as hero image.
+ * Supports light/dark theme.
  */
-
-import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { ExternalLink, Compass, Cloud, CloudRain, Sun, CloudSnow } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Sun, Moon, ExternalLink, Compass, Clock } from 'lucide-react'
 import useBrowserStore from '../../store/useBrowserStore'
+import { ai } from '../../platform'
 
 const QUOTES = [
   { text: "The best way to predict the future is to invent it.", author: "Alan Kay" },
   { text: "Any sufficiently advanced technology is indistinguishable from magic.", author: "Arthur C. Clarke" },
-  { text: "The universe is under no obligation to make sense to you.", author: "Neil deGrasse Tyson" },
-  { text: "The most dangerous phrase in any language is 'we've always done it this way.'", author: "Grace Hopper" },
-  { text: "In the middle of every difficulty lies opportunity.", author: "Albert Einstein" },
-  { text: "Reality is merely an illusion, albeit a very persistent one.", author: "Einstein" },
+  { text: "Reality is merely an illusion, albeit a very persistent one.", author: "Albert Einstein" },
+  { text: "The most dangerous phrase: 'we've always done it this way.'", author: "Grace Hopper" },
+  { text: "Rust never sleeps.", author: "Neil Young" },
 ]
 
-function getWeatherIcon(code) {
-  if (!code) return <Sun size={16}/>
-  if (code >= 200 && code < 300) return <CloudRain size={16}/>
-  if (code >= 300 && code < 600) return <CloudRain size={16}/>
-  if (code >= 600 && code < 700) return <CloudSnow size={16}/>
-  if (code >= 800) return <Sun size={16}/>
-  return <Cloud size={16}/>
-}
-
 export default function NewTab() {
-  const { recentPages, addTab } = useBrowserStore()
+  const { recentPages, addTab, theme, toggleTheme } = useBrowserStore()
   const [time, setTime] = useState(new Date())
-  const [weather, setWeather] = useState(null)
-  const [rabbitHole, setRabbitHole] = useState(null)
   const [query, setQuery] = useState('')
+  const [rabbitHole, setRabbitHole] = useState(null)
+  const [gearLoaded, setGearLoaded] = useState(false)
+  const inputRef = useRef(null)
   const quote = QUOTES[new Date().getDate() % QUOTES.length]
+  const isDark = theme === 'dark'
 
-  // Clock tick
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
 
-  // Weather (OpenWeatherMap free tier, geolocation)
   useEffect(() => {
-    if (!process.env.WEATHER_API_KEY) return
-    navigator.geolocation?.getCurrentPosition(async ({ coords }) => {
-      try {
-        const r = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${process.env.WEATHER_API_KEY}&units=metric`
-        )
-        const d = await r.json()
-        setWeather({ temp: Math.round(d.main?.temp), city: d.name, code: d.weather?.[0]?.id, desc: d.weather?.[0]?.description })
-      } catch { /* no weather */ }
-    })
-  }, [])
-
-  // AI rabbit hole suggestion
-  useEffect(() => {
-    if (recentPages.length > 0) {
-      window.corrode?.ai.suggestRabbitHole(recentPages).then(r => setRabbitHole(r)).catch(() => {})
+    if (recentPages.length > 3) {
+      ai.suggestRabbitHole(recentPages).then(setRabbitHole).catch(() => {})
     }
   }, [recentPages.length])
 
-  const hours   = time.getHours().toString().padStart(2, '0')
-  const minutes = time.getMinutes().toString().padStart(2, '0')
-  const seconds = time.getSeconds().toString().padStart(2, '0')
-
   function navigate(url) {
     if (!url.trim()) return
-    const u = /^https?:\/\//.test(url) || /^[\w-]+\.[a-z]{2,}/.test(url)
-      ? url.startsWith('http') ? url : `https://${url}`
+    const u = /^https?:\/\//.test(url) ? url
+      : /^[\w-]+\.[a-z]{2,}/.test(url) ? `https://${url}`
       : `https://www.google.com/search?q=${encodeURIComponent(url)}`
     addTab(u)
   }
 
+  const h = time.getHours().toString().padStart(2,'0')
+  const m = time.getMinutes().toString().padStart(2,'0')
+  const s = time.getSeconds().toString().padStart(2,'0')
+
   return (
-    <div className="h-full w-full bg-void flex flex-col items-center justify-center overflow-y-auto py-8 px-6"
-      style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(234,88,12,0.06) 0%, transparent 60%), #0a0a0a' }}>
+    <div className="h-full w-full flex flex-col items-center rust-texture overflow-y-auto relative">
 
-      {/* Clock */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-2"
+      {/* Theme toggle — top right */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-4 right-4 z-10 p-2 rounded-full transition-all"
+        style={{
+          background: 'var(--bg-300)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-muted)',
+        }}
+        title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
       >
-        <div className="font-mono text-7xl font-light text-[var(--text-primary)] tracking-tight select-none">
-          <span>{hours}</span>
-          <span className="text-rust-600 animate-pulse">:</span>
-          <span>{minutes}</span>
-          <span className="text-3xl text-[var(--text-muted)] ml-2">{seconds}</span>
-        </div>
-        <p className="text-sm text-[var(--text-muted)] mt-1">
-          {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-        </p>
-      </motion.div>
+        {isDark ? <Sun size={15} style={{ color: 'var(--ember-bright)' }} /> : <Moon size={15} style={{ color: 'var(--ember)' }} />}
+      </button>
 
-      {/* Weather */}
-      {weather && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center gap-2 mb-6 text-[var(--text-muted)]"
-        >
-          {getWeatherIcon(weather.code)}
-          <span className="text-sm">{weather.temp}° · {weather.city} · {weather.desc}</span>
+      {/* Main content */}
+      <div className="flex flex-col items-center justify-center flex-1 w-full px-6 py-8" style={{ minHeight: '100%' }}>
+
+        {/* Clock */}
+        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.1 }}
+          className="mb-5 text-center select-none">
+          <div className="font-mono tracking-tight" style={{ fontSize: '42px', fontWeight: 300, color: 'var(--text-primary)', lineHeight: 1 }}>
+            {h}<span style={{ color: 'var(--ember)', animation: 'emberPulse 1s ease-in-out infinite' }}>:</span>{m}
+            <span className="font-mono" style={{ fontSize: '22px', color: 'var(--text-muted)', marginLeft: '6px' }}>{s}</span>
+          </div>
+          <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+            {time.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })}
+          </p>
         </motion.div>
-      )}
 
-      {/* Search bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="w-full max-w-lg mb-8"
-      >
-        <div className="flex items-center gap-3 bg-void-200 border border-void-400 focus-within:border-rust-600 rounded-xl px-4 py-3 transition-colors shadow-lg focus-within:shadow-[0_0_0_3px_rgba(234,88,12,0.1)]">
-          <span className="text-[var(--text-muted)] text-lg">⌕</span>
-          <input
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && navigate(query)}
-            placeholder="Search or enter URL…"
-            className="flex-1 bg-transparent outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-            autoFocus
+        {/* GEAR LOGO — real PNG from upload */}
+        <motion.div
+          initial={{ opacity:0, scale:0.75, y:20 }}
+          animate={{ opacity:1, scale:1, y:0 }}
+          transition={{ duration:0.7, ease:[0.16,1,0.3,1] }}
+          className="mb-6 relative animate-gear-float"
+          style={{ width: 180, height: 180 }}
+        >
+          {/* Glow behind gear */}
+          <div className="absolute inset-0 rounded-full" style={{
+            background: 'radial-gradient(circle, rgba(201,74,10,0.4) 0%, rgba(120,40,8,0.2) 40%, transparent 70%)',
+            transform: 'scale(1.3)',
+            filter: 'blur(20px)',
+          }} />
+          <img
+            src="/gear.png"
+            alt="Corrode"
+            className="relative z-10 w-full h-full"
+            style={{
+              objectFit: 'contain',
+              filter: isDark
+                ? 'drop-shadow(0 0 25px rgba(201,74,10,0.7)) drop-shadow(0 0 50px rgba(180,50,8,0.35))'
+                : 'drop-shadow(0 0 15px rgba(160,55,10,0.5)) drop-shadow(0 0 30px rgba(140,45,8,0.25))',
+              opacity: gearLoaded ? 1 : 0,
+              transition: 'opacity 0.4s',
+            }}
+            onLoad={() => setGearLoaded(true)}
           />
-        </div>
-      </motion.div>
+          {!gearLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full border-2 animate-spin"
+                style={{ borderColor:'var(--ember)', borderTopColor:'transparent' }} />
+            </div>
+          )}
+        </motion.div>
 
-      {/* Quote */}
-      <motion.blockquote
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-center max-w-md mb-10"
-      >
-        <p className="text-sm text-[var(--text-secondary)] italic leading-relaxed">"{quote.text}"</p>
-        <p className="text-xs text-[var(--text-muted)] mt-1">— {quote.author}</p>
-      </motion.blockquote>
+        {/* App name */}
+        <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.25 }}
+          className="mb-6 text-center">
+          <h1 className="font-display tracking-[0.3em] uppercase" style={{ fontSize:'22px', color:'var(--text-primary)', letterSpacing:'0.35em' }}>
+            CORRODE
+          </h1>
+          <p className="text-xs mt-0.5 font-sans" style={{ color:'var(--text-muted)', letterSpacing:'0.15em' }}>
+            THE BROWSER FROM 2035
+          </p>
+        </motion.div>
 
-      {/* Recent sites */}
-      {recentPages.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="w-full max-w-2xl mb-8"
-        >
-          <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3 px-1">Recently visited</h3>
-          <div className="grid grid-cols-4 gap-3">
-            {recentPages.slice(0, 8).map((p, i) => (
-              <motion.button
-                key={p.url}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + i * 0.04 }}
-                onClick={() => addTab(p.url)}
-                className="group bg-void-200 hover:bg-void-300 border border-void-400 hover:border-rust-700/50 rounded-xl p-3 text-left transition-all"
-              >
-                <div className="w-6 h-6 rounded bg-void-400 mb-2 flex items-center justify-center overflow-hidden">
-                  {p.favicon
-                    ? <img src={p.favicon} className="w-4 h-4" alt="" />
-                    : <span className="text-xs text-[var(--text-muted)]">{(p.domain || 'X')[0].toUpperCase()}</span>
-                  }
-                </div>
-                <p className="text-xs text-[var(--text-primary)] truncate leading-tight">{p.title || p.domain}</p>
-                <p className="text-[10px] text-[var(--text-muted)] truncate mt-0.5">{p.domain}</p>
-              </motion.button>
-            ))}
+        {/* Search bar */}
+        <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.35 }}
+          className="w-full max-w-md mb-6">
+          <div className="flex items-center gap-3 rounded-full px-5 py-3 transition-all"
+            style={{
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border)',
+              backdropFilter: 'blur(12px)',
+            }}
+            onFocusCapture={e => e.currentTarget.style.border = '1px solid var(--border-focus)'}
+            onBlurCapture={e => e.currentTarget.style.border = '1px solid var(--border)'}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+              style={{ color:'var(--text-muted)', flexShrink:0 }}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && navigate(query)}
+              placeholder="Search or type a URL"
+              autoFocus
+              className="flex-1 bg-transparent outline-none font-sans text-sm"
+              style={{ color:'var(--text-primary)', caretColor:'var(--ember-bright)' }}
+            />
+            <AnimatePresence>
+              {query && (
+                <motion.button
+                  initial={{ opacity:0, scale:0.8 }}
+                  animate={{ opacity:1, scale:1 }}
+                  exit={{ opacity:0, scale:0.8 }}
+                  onClick={() => navigate(query)}
+                  className="btn-forge px-4 py-1 rounded-full text-xs"
+                >
+                  Search
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
-      )}
 
-      {/* AI Rabbit hole */}
-      {rabbitHole && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="w-full max-w-2xl"
-        >
-          <div className="bg-void-200 border border-rust-800/40 rounded-xl px-5 py-4 flex items-start gap-4">
-            <div className="w-8 h-8 rounded-lg bg-rust-900/40 flex items-center justify-center shrink-0">
-              <Compass size={15} className="text-rust-500" />
+        {/* Quote */}
+        <motion.blockquote initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.45 }}
+          className="text-center max-w-xs mb-7">
+          <p className="text-xs italic leading-relaxed" style={{ color:'var(--text-muted)', fontWeight:300 }}>
+            "{quote.text}"
+          </p>
+          <p className="text-xs mt-1" style={{ color:'var(--text-muted)', opacity:0.6 }}>— {quote.author}</p>
+        </motion.blockquote>
+
+        {/* Recent sites */}
+        {recentPages.length > 0 && (
+          <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.5 }}
+            className="w-full max-w-lg mb-5">
+            <p className="text-xs uppercase tracking-[0.18em] mb-3 text-center font-display"
+              style={{ color:'var(--text-muted)', fontSize:'9px' }}>Recently Visited</p>
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+              {recentPages.slice(0,6).map((p, i) => (
+                <motion.button key={p.url}
+                  initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.55 + i*0.04 }}
+                  onClick={() => addTab(p.url)}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl transition-all group"
+                  style={{ background:'var(--bg-200)', border:'1px solid var(--border)' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor='var(--ember)'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 4px 16px rgba(180,60,20,0.2)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none' }}
+                >
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden"
+                    style={{ background:'var(--bg-300)', border:'1px solid var(--border)' }}>
+                    {p.favicon
+                      ? <img src={p.favicon} className="w-5 h-5" alt="" />
+                      : <span className="font-display text-sm" style={{ color:'var(--ember)' }}>
+                          {(p.domain||'?')[0].toUpperCase()}
+                        </span>
+                    }
+                  </div>
+                  <span className="truncate w-full text-center" style={{ color:'var(--text-muted)', fontSize:'9px' }}>
+                    {p.domain || p.title}
+                  </span>
+                </motion.button>
+              ))}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-rust-400 font-semibold mb-1">Suggested Rabbit Hole</p>
-              <p className="text-sm text-[var(--text-primary)] font-medium">{rabbitHole.topic}</p>
-              {rabbitHole.reason && <p className="text-xs text-[var(--text-muted)] mt-1">{rabbitHole.reason}</p>}
+          </motion.div>
+        )}
+
+        {/* Rabbit hole */}
+        {rabbitHole && (
+          <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.7 }}
+            className="w-full max-w-md">
+            <div className="flex items-start gap-3 rounded-2xl px-4 py-3 transition-all"
+              style={{ background:'var(--bg-200)', border:'1px solid var(--border)' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background:'var(--bg-300)', border:'1px solid var(--border)' }}>
+                <Compass size={13} style={{ color:'var(--ember)' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-wider mb-0.5 font-sans" style={{ color:'var(--ember)', fontWeight:700, fontSize:'9px' }}>
+                  Rabbit Hole
+                </p>
+                <p className="text-xs" style={{ color:'var(--text-secondary)' }}>{rabbitHole.topic}</p>
+                {rabbitHole.reason && <p className="text-xs mt-0.5" style={{ color:'var(--text-muted)', fontSize:'10px' }}>{rabbitHole.reason}</p>}
+              </div>
+              {rabbitHole.search_query && (
+                <button onClick={() => navigate(rabbitHole.search_query)} style={{ color:'var(--text-muted)' }}
+                  onMouseEnter={e => e.currentTarget.style.color='var(--ember-bright)'}
+                  onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}>
+                  <ExternalLink size={13} />
+                </button>
+              )}
             </div>
-            {rabbitHole.search_query && (
-              <button
-                onClick={() => navigate(rabbitHole.search_query)}
-                className="flex items-center gap-1 text-xs text-rust-500 hover:text-rust-400 transition-colors shrink-0"
-              >
-                <ExternalLink size={12} />
-                Explore
-              </button>
-            )}
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </div>
     </div>
   )
 }

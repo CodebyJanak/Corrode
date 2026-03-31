@@ -1,117 +1,121 @@
 /**
- * src/components/Browser/Toolbar.jsx
- * Navigation controls, address bar, and feature toggle buttons.
+ * Toolbar.jsx — Corrode Browser — theme-aware
  */
-
 import React, { useState, useRef, useEffect } from 'react'
-import {
-  ChevronLeft, ChevronRight, RotateCw, Home,
-  Brain, Command, GitBranch, BookOpen,
-  Shield, Focus, Share2, Clock, Zap
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, RotateCw, Home, Brain, Command, GitBranch, BookOpen, Shield, Focus, Clock, Sun, Moon } from 'lucide-react'
 import useBrowserStore from '../../store/useBrowserStore'
+import { isElectron } from '../../platform'
+import SettingsButton from './Settings'
 
 function normalizeURL(input) {
-  const trimmed = input.trim()
-  if (trimmed.startsWith('corrode://')) return trimmed
-  if (/^https?:\/\//.test(trimmed)) return trimmed
-  if (/^[\w-]+\.[a-z]{2,}/.test(trimmed)) return `https://${trimmed}`
-  return `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`
+  const t = input.trim()
+  if (t.startsWith('corrode://')) return t
+  if (/^https?:\/\//.test(t)) return t
+  // Add https if it looks like a domain
+  if (/^[\w-]+\.[a-z]{2,}/.test(t)) return `https://${t}`
+  return `https://www.google.com/search?q=${encodeURIComponent(t)}`
 }
 
 export default function Toolbar() {
-  const {
-    tabs, activeTabId, updateTab, getActiveTab,
-    addressBarValue, setAddressBarValue,
-    toggleSidebar, sidebarOpen,
-    openCommandPalette,
-    openGraph,
-    openDigest,
-    manipulationDetectorOn, toggleManipulationDetector,
-    focusModeOn, toggleFocusMode,
-  } = useBrowserStore()
-
+  const { activeTabId, updateTab, getActiveTab, toggleSidebar, sidebarOpen, openCommandPalette, openGraph, openDigest, manipulationDetectorOn, toggleManipulationDetector, focusModeOn, toggleFocusMode, theme, toggleTheme } = useBrowserStore()
   const [editing, setEditing] = useState(false)
   const [inputVal, setInputVal] = useState('')
   const inputRef = useRef(null)
-
   const activeTab = getActiveTab()
+  const isDark = theme === 'dark'
 
-  // Sync address bar with active tab URL
-  useEffect(() => {
-    if (!editing) setInputVal(activeTab?.url || '')
-  }, [activeTab?.url, editing])
+  useEffect(() => { if (!editing) setInputVal(activeTab?.url || '') }, [activeTab?.url, editing])
 
   function navigate(url) {
-    const finalURL = normalizeURL(url)
-    updateTab(activeTabId, { url: finalURL, loading: true })
-    setInputVal(finalURL)
-    setEditing(false)
+    const final = normalizeURL(url)
+    updateTab(activeTabId, { url: final, loading: true })
+    setInputVal(final); setEditing(false)
   }
 
-  function handleKeyDown(e) {
-    if (e.key === 'Enter') navigate(inputVal)
-    if (e.key === 'Escape') { setEditing(false); setInputVal(activeTab?.url || '') }
+  const iconStyle = (active) => ({
+    padding: '6px', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.15s', display:'flex', alignItems:'center', justifyContent:'center',
+    color: active ? 'var(--ember-bright)' : 'var(--text-muted)',
+    background: active ? 'rgba(180,60,20,0.2)' : 'transparent',
+    border: active ? '1px solid rgba(180,60,20,0.35)' : '1px solid transparent',
+  })
+
+  function hoverOn(e) { e.currentTarget.style.color='var(--text-secondary)'; e.currentTarget.style.background='var(--bg-300)' }
+  function hoverOff(e, active) {
+    e.currentTarget.style.color = active ? 'var(--ember-bright)' : 'var(--text-muted)'
+    e.currentTarget.style.background = active ? 'rgba(180,60,20,0.2)' : 'transparent'
   }
-
-  function handleFocus() {
-    setEditing(true)
-    setInputVal(activeTab?.url || '')
-    setTimeout(() => inputRef.current?.select(), 10)
-  }
-
-  // Webview navigation — dispatched via custom event that WebviewArea listens to
-  function goBack()    { window.dispatchEvent(new CustomEvent('webview:back')) }
-  function goForward() { window.dispatchEvent(new CustomEvent('webview:forward')) }
-  function reload()    { window.dispatchEvent(new CustomEvent('webview:reload')) }
-  function goHome()    { navigate('corrode://newtab') }
-
-  const iconBtn = 'p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-void-300 transition-colors'
-  const activeIconBtn = 'p-1.5 rounded text-[var(--rust)] bg-void-300 transition-colors'
 
   return (
-    <div className="flex items-center gap-1.5 px-2 py-1.5 bg-void-100 border-b border-void-300 shrink-0">
-      {/* Nav buttons */}
-      <button onClick={goBack}    className={iconBtn} disabled={!activeTab?.canGoBack}    title="Back">    <ChevronLeft  size={16} /></button>
-      <button onClick={goForward} className={iconBtn} disabled={!activeTab?.canGoForward} title="Forward"> <ChevronRight size={16} /></button>
-      <button onClick={reload}    className={iconBtn} title="Reload"> <RotateCw size={14} /></button>
-      <button onClick={goHome}    className={iconBtn} title="Home">   <Home     size={14} /></button>
+    <div className="flex items-center gap-1 px-2 py-1.5 shrink-0 transition-colors"
+      style={{ background:'var(--bg-chrome)', borderBottom:'1px solid var(--border)' }}>
+
+      {/* Nav */}
+      {[
+        { icon:<ChevronLeft size={16}/>, ev:'webview:back',    title:'Back' },
+        { icon:<ChevronRight size={16}/>, ev:'webview:forward', title:'Forward' },
+        { icon:<RotateCw size={14}/>,    ev:'webview:reload',  title:'Reload' },
+      ].map(({icon,ev,title}) => (
+        <button key={title} style={iconStyle(false)} title={title}
+          onClick={() => window.dispatchEvent(new CustomEvent(ev))}
+          onMouseEnter={hoverOn} onMouseLeave={e=>hoverOff(e,false)}>{icon}</button>
+      ))}
+      <button style={iconStyle(false)} title="Home"
+        onClick={() => navigate('corrode://newtab')}
+        onMouseEnter={hoverOn} onMouseLeave={e=>hoverOff(e,false)}>
+        <Home size={14}/>
+      </button>
 
       {/* Address bar */}
-      <div className="flex-1 flex items-center bg-void-200 border border-void-400 rounded-md px-3 h-7 focus-within:border-rust-600 focus-within:shadow-[0_0_0_2px_rgba(234,88,12,0.15)] transition-all">
+      <div className="flex-1 flex items-center gap-2 mx-1 px-3 h-7 rounded-lg transition-all"
+        style={{ background:'var(--bg-input)', border:'1px solid var(--border)' }}
+        onFocusCapture={e => { e.currentTarget.style.borderColor='var(--border-focus)'; e.currentTarget.style.boxShadow='0 0 0 2px rgba(201,74,10,0.12)' }}
+        onBlurCapture={e  => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow='none' }}>
         {!editing && activeTab?.url && !activeTab.url.startsWith('corrode://') && (
-          <span className="text-xs text-[var(--rust)] mr-1.5 shrink-0">🔒</span>
+          <span style={{ color:'var(--ember)', fontSize:'11px' }}>🔒</span>
         )}
         <input
           ref={inputRef}
           value={editing ? inputVal : (activeTab?.url || '')}
           onChange={e => setInputVal(e.target.value)}
-          onFocus={handleFocus}
+          onFocus={() => { setEditing(true); setInputVal(activeTab?.url||''); setTimeout(()=>inputRef.current?.select(),10) }}
           onBlur={() => setEditing(false)}
-          onKeyDown={handleKeyDown}
-          className="flex-1 bg-transparent text-xs text-[var(--text-primary)] outline-none font-mono placeholder:text-[var(--text-muted)]"
-          placeholder="Search or enter URL… (Ctrl+K for commands)"
+          onKeyDown={e => { if(e.key==='Enter') navigate(inputVal); if(e.key==='Escape'){setEditing(false);setInputVal(activeTab?.url||'')} }}
+          className="flex-1 bg-transparent text-xs outline-none font-mono"
+          style={{ color:'var(--text-primary)', caretColor:'var(--ember-bright)' }}
+          placeholder="Search or enter URL… (Ctrl+K)"
           spellCheck={false}
         />
       </div>
 
-      {/* Divider */}
-      <div className="w-px h-5 bg-void-400 mx-1" />
+      <div className="w-px h-4 mx-0.5 shrink-0" style={{ background:'var(--border)' }} />
 
       {/* Feature buttons */}
-      <button onClick={openCommandPalette}      className={iconBtn}                               title="Command Palette (Ctrl+K)"><Command  size={14} /></button>
-      <button onClick={toggleSidebar}           className={sidebarOpen ? activeIconBtn : iconBtn} title="AI Second Brain">       <Brain    size={14} /></button>
-      <button onClick={openGraph}               className={iconBtn}                               title="Knowledge Graph">        <GitBranch size={14} /></button>
-      <button onClick={openDigest}              className={iconBtn}                               title="Daily Digest">           <BookOpen size={14} /></button>
-      <button onClick={toggleManipulationDetector} className={manipulationDetectorOn ? activeIconBtn : iconBtn} title="Manipulation Detector"><Shield size={14} /></button>
-      <button onClick={toggleFocusMode}         className={focusModeOn ? activeIconBtn : iconBtn} title="Focus Mode">             <Focus    size={14} /></button>
-      <button className={iconBtn} title="Time Warp" onClick={() => {
-        const url = activeTab?.url
-        if (url && !url.startsWith('corrode://')) {
-          const wbUrl = `https://web.archive.org/web/2010/${url}`
-          window.dispatchEvent(new CustomEvent('webview:navigate', { detail: wbUrl }))
-        }
-      }}><Clock size={14} /></button>
+      {[
+        { icon:<Command size={14}/>,  action:openCommandPalette,         title:'Command Palette (Ctrl+K)', active:false },
+        { icon:<Brain size={14}/>,    action:toggleSidebar,              title:'Second Brain',             active:sidebarOpen },
+        { icon:<GitBranch size={14}/>,action:openGraph,                   title:'Knowledge Graph',          active:false },
+        { icon:<BookOpen size={14}/>, action:openDigest,                  title:'Daily Digest',             active:false },
+        { icon:<Shield size={14}/>,   action:toggleManipulationDetector,  title:'Manipulation Detector',    active:manipulationDetectorOn },
+        { icon:<Focus size={14}/>,    action:toggleFocusMode,             title:'Focus Mode',               active:focusModeOn },
+        { icon:<Clock size={14}/>,    action:() => {
+            const url=activeTab?.url
+            if(url&&!url.startsWith('corrode://')) window.dispatchEvent(new CustomEvent('webview:navigate',{detail:`https://web.archive.org/web/2010/${url}`}))
+          }, title:'Time Warp (Wayback Machine)', active:false },
+      ].map(({icon,action,title,active}) => (
+        <button key={title} style={iconStyle(active)} title={title} onClick={action}
+          onMouseEnter={e=>{if(!active)hoverOn(e)}}
+          onMouseLeave={e=>{if(!active)hoverOff(e,false)}}>
+          {icon}
+        </button>
+      ))}
+
+      {/* Theme toggle */}
+      <button style={iconStyle(false)} title={isDark?'Light mode':'Dark mode'} onClick={toggleTheme}
+        onMouseEnter={hoverOn} onMouseLeave={e=>hoverOff(e,false)}>
+        {isDark ? <Sun size={14}/> : <Moon size={14}/>}
+      </button>
+
+      <SettingsButton />
     </div>
   )
 }

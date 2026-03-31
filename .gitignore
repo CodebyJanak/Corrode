@@ -4,3 +4,4 @@ release/
 .env
 *.db
 *.db-journal
+BUILD_GUIDE.md

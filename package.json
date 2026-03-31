@@ -1,24 +1,34 @@
 {
   "name": "corrode",
   "version": "0.1.0",
-  "description": "The browser from 2035.",
+  "description": "The browser from 2035. Oxidized. Alive.",
+  "type": "module",
   "main": "main/index.js",
   "scripts": {
-    "start": "concurrently \"npm run vite\" \"wait-on http://localhost:5173 && electron .\"",
-    "vite": "vite",
-    "build": "vite build",
-    "dist": "npm run build && electron-builder"
+    "dev":           "vite",
+    "build":         "vite build",
+    "preview":       "vite preview",
+    "desktop:build": "vite build && electron-builder",
+    "desktop:win":   "vite build && electron-builder --win",
+    "desktop:mac":   "vite build && electron-builder --mac",
+    "desktop:linux": "vite build && electron-builder --linux",
+    "android:sync":  "vite build && npx cap sync android",
+    "android:open":  "npx cap open android"
   },
   "dependencies": {
-    "sql.js": "^1.12.0",
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
     "d3": "^7.9.0",
     "framer-motion": "^11.1.7",
     "lucide-react": "^0.376.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "sql.js": "^1.12.0",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.19",
     "concurrently": "^8.2.2",
@@ -32,7 +42,11 @@
   "build": {
     "appId": "io.corrode.browser",
     "productName": "Corrode",
+    "directories": { "output": "release/desktop" },
     "files": ["dist/**/*", "main/**/*", "public/**/*"],
-    "directories": { "output": "release" }
+    "win":   { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "public/gear.png" },
+    "mac":   { "target": [{ "target": "dmg" }], "icon": "public/gear.png", "category": "public.app-category.utilities" },
+    "linux": { "target": [{ "target": "AppImage" }], "icon": "public/gear.png", "category": "Network" },
+    "nsis":  { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
   }
 }

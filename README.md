@@ -1,176 +1,161 @@
 # Corrode Browser 🦀
 
-> The browser from 2035. Named after something ancient. Powered by AI, built with oxidized metal aesthetics.
-
-![Corrode Browser](https://img.shields.io/badge/Stack-Electron%20%2B%20React%20%2B%20AI-ea580c?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-111111?style=flat-square)
+> The browser from 2035. Runs on Windows, Mac, Linux, and Android.
 
 ---
 
-## ✨ Features
+## Platform Support
 
-| Feature | Description |
-|---|---|
-| **Second Brain Sidebar** | AI summarizes every page you visit, saved to local SQLite. Semantic search by meaning. |
-| **Live Page Intelligence** | Floating chat button — ask AI anything about the current page. |
-| **Daily Digest** | "Today You Learned" — AI-generated daily browsing summary with mood inference. |
-| **Manipulation Detector** | Highlights emotional manipulation, factual distortion, and dark patterns in real time. |
-| **Command Palette** | Ctrl+K — search, navigate, switch tabs, toggle features. |
-| **Knowledge Graph** | D3.js force-directed graph of everything you've browsed, connected by topic. |
-| **Focus Mode** | 5-second friction delay on blocked sites. Psychological, not hard walls. |
-| **Time Warp** | View any site via Wayback Machine with a single click. |
-| **Custom New Tab** | Clock, weather, recent sites, AI-suggested rabbit hole. |
+| Platform | Format | How |
+|---|---|---|
+| Windows | `.exe` installer | Electron Builder |
+| macOS | `.dmg` | Electron Builder |
+| Linux | `.AppImage` / `.deb` | Electron Builder |
+| Android | `.apk` | Capacitor |
+| Browser (dev) | Web app | Vite |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start 
 
-### Prerequisites
-- **Node.js** v18 or newer
-- **npm** v9 or newer
-
-### 1. Install dependencies
 ```bash
 npm install
+npm run dev        # starts Vite on http://localhost:5173
 ```
 
-### 2. Set up API keys
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and fill in your keys:
-
-```env
-# FREE — get at https://console.groq.com
-GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-# OR use Gemini: https://aistudio.google.com/app/apikey
-GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-# Which to use
-AI_PROVIDER=groq
-
-# FREE — https://openweathermap.org/api (standard free tier)
-WEATHER_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-
-### 3. Start the app
-```bash
-npm start
-```
-
-This runs Vite dev server + Electron simultaneously.
+Open `http://localhost:5173` in your browser. On first load you'll be prompted to enter a free API key.
 
 ---
 
-## 🔑 Getting Free API Keys
+## Getting Free API Keys
 
 ### Groq (Recommended — fastest)
-1. Go to https://console.groq.com
-2. Sign up (free)
-3. Create an API key
-4. Set `GROQ_API_KEY` in `.env`
-5. Set `AI_PROVIDER=groq`
-
-**Free tier:** 30 requests/minute, 14,400/day — more than enough for browsing.
+1. Go to https://console.groq.com → Sign up free
+2. API Keys → Create Key → copy it
+3. Paste in the Settings modal inside Corrode
 
 ### Google Gemini (Alternative)
 1. Go to https://aistudio.google.com/app/apikey
-2. Sign in with Google
-3. Create an API key
-4. Set `GEMINI_API_KEY` in `.env`
-5. Set `AI_PROVIDER=gemini`
-
-**Free tier:** 15 requests/minute, 1,500/day.
-
-### OpenWeatherMap (Weather on new tab)
-1. Go to https://openweathermap.org/api
-2. Sign up → API Keys tab → copy default key
-3. Set `WEATHER_API_KEY` in `.env`
+2. Sign in with Google → Get API Key
+3. Paste in Settings modal
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+### Prerequisites
+- Node.js 18+
+- On Windows: nothing extra needed
+- On Mac: Xcode Command Line Tools (`xcode-select --install`)
+- On Linux: `sudo apt install rpm` for RPM builds
 
-| Shortcut | Action |
-|---|---|
-| `Ctrl+K` | Open Command Palette |
-| `Ctrl+T` | New tab |
-| `Ctrl+W` | Close tab (planned) |
-| `Ctrl+L` | Focus address bar (click it) |
-| `Alt+←` | Back |
-| `Alt+→` | Forward |
+### Setup
+```bash
+npm install
+
+# Copy and fill in your API keys
+cp .env.example .env
+# Edit .env — add GROQ_API_KEY or GEMINI_API_KEY
+```
+
+### Build commands
+
+```bash
+# Current platform (auto-detects Windows/Mac/Linux)
+npm run desktop:build
+
+# Specific platforms (must run on that OS or use CI)
+npm run desktop:win      # → release/desktop/*.exe
+npm run desktop:mac      # → release/desktop/*.dmg
+npm run desktop:linux    # → release/desktop/*.AppImage
+```
+
+Output files are in `release/desktop/`.
+
+### Cross-compiling note
+- `.exe` → must build on Windows (or use GitHub Actions)
+- `.dmg` → must build on macOS
+- `.AppImage` → can build on any Linux
 
 ---
 
-## 🗂️ Project Structure
+## Build for Android (.apk)
+
+> Requires Android Studio installed on a desktop machine.
+
+### Prerequisites
+1. Install Android Studio: https://developer.android.com/studio
+2. Install Java 17+
+3. Make sure `ANDROID_HOME` env var is set
+
+### Steps
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Build the React app
+npm run build
+
+# 3. Add Android platform (first time only)
+npm run android:init
+
+# 4. Sync web assets into Android project
+npm run android:sync
+
+# 5. Open in Android Studio
+npm run android:open
+```
+
+In Android Studio:
+- Wait for Gradle sync to finish
+- Click **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+- APK will be at `android/app/build/outputs/apk/debug/app-debug.apk`
+
+### Install APK on your phone
+```bash
+# Via USB (enable Developer Options + USB Debugging on phone first)
+adb install android/app/build/outputs/apk/debug/app-debug.apk
+
+# Or just copy the .apk to your phone and open it
+```
+
+---
+
+## Project Structure
 
 ```
 corrode/
-├── main/                  # Electron main process (Node.js)
-│   ├── index.js           # App entry, BrowserWindow creation
-│   ├── ipc.js             # All IPC handlers
-│   ├── db.js              # SQLite operations (better-sqlite3)
-│   ├── ai.js              # AI API calls (Groq / Gemini)
-│   └── preload.js         # Secure bridge to renderer
+├── main/              # Electron main process (desktop only)
+│   ├── index.js       # BrowserWindow + app setup
+│   ├── ipc.js         # IPC handlers
+│   ├── db.js          # SQLite (Node.js, desktop)
+│   ├── ai.js          # AI calls (desktop, keys in .env)
+│   └── preload.js     # Secure bridge to renderer
 │
-├── src/                   # React frontend
+├── src/               # React app (runs everywhere)
+│   ├── platform.js    # ← Platform bridge (Electron vs Android/Web)
+│   ├── db-web.js      # ← sql.js + IndexedDB (Android/Web)
 │   ├── components/
-│   │   ├── Browser/       # TitleBar, TabBar, Toolbar, WebviewArea, PageChat
-│   │   ├── Sidebar/       # AI Second Brain
+│   │   ├── Browser/   # TitleBar, TabBar, Toolbar, WebviewArea, PageChat, Settings
+│   │   ├── Sidebar/   # AI Second Brain
 │   │   ├── CommandPalette/
-│   │   ├── Graph/         # D3.js knowledge graph
-│   │   ├── Digest/        # Daily digest
-│   │   └── NewTab/        # Custom new tab page
-│   ├── store/             # Zustand global state
-│   ├── hooks/             # Reusable hooks
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── index.css
+│   │   ├── Graph/     # D3 knowledge graph
+│   │   ├── Digest/    # Daily digest
+│   │   └── NewTab/    # Custom new tab
+│   ├── store/         # Zustand state
+│   └── App.jsx
 │
-├── public/                # Static assets
-├── .env.example           # API key template
-├── package.json
-├── vite.config.js
-└── tailwind.config.js
+├── capacitor.config.json   # Android build config
+├── .env.example            # Desktop API key template
+└── package.json
 ```
 
 ---
 
-## 🔒 Security Notes
+## How Platform Detection Works
 
-- **API keys never touch the renderer process.** All AI calls go through Electron IPC → main process.
-- The preload script exposes only a typed, limited API surface via `contextBridge`.
-- `nodeIntegration: false` + `contextIsolation: true` enforced everywhere.
+`src/platform.js` detects the environment at runtime:
 
----
+- **Electron** → `window.corrode` exists (injected by preload.js) → uses IPC for DB and AI (keys stay secure in main process)
+- **Android/Web** → no `window.corrode` → uses `sql.js` + IndexedDB for DB, direct API fetch for AI (key stored in localStorage)
 
-## 🛠️ Build for Distribution
-
-```bash
-npm run dist
-```
-
-Output: `release/` folder with platform-specific installers.
-
----
-
-## 🗺️ Roadmap
-
-- [ ] Shared Browsing (WebSocket session sharing)
-- [ ] Focus Mode friction UI
-- [ ] Local vector embeddings for true semantic search (no API needed)
-- [ ] Browser extensions support
-- [ ] Per-tab screenshot previews on hover
-- [ ] Note-taking overlay (highlight + annotate any page)
-
----
-
-## 📄 License
-
-MIT — build whatever you want with it.
-
----
-
-*Built with rust-orange obsession and way too much coffee.*
+All components import from `platform.js` — they don't know or care which platform they're on.
